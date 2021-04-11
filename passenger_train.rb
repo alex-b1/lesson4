@@ -6,8 +6,8 @@ class PassengerTrain < Train
     super(options)
   end
 
-  def attach_carriage
-    super if validate_carriage_type?
+  def attach_carriage(carriage)
+    super if validate_carriage_type? carriage
   end
 
   private

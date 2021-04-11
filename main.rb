@@ -7,188 +7,221 @@ require_relative './cargo_carriage.rb'
 require_relative './route.rb'
 require_relative './station.rb'
 
-trains_list = []
-routes_list = []
-stations_list = []
+class Main
 
-cargo_carriage = CargoCarriage.new
-passenger_carriage = PassengerCarriage.new
+  def initialize
+    @trains_list = []
+    @routes_list = []
+    @stations_list = []
+    @command_list = {
+        1 => {title: 'Создать станцию', command: -> {create_station}},
+        2 => {title: 'Создать поезд', command: -> {create_train}},
+        3 => {title: 'Создать маршрут', command: -> {create_route}},
+        4 => {title: 'Добавить станцию в маршруту', command: -> {add_station_to_route}},
+        5 => {title: 'Удалить станцию из маршрута', command: -> {remove_station_from_route}},
+        6 => {title: 'Назначить маршрут поезду', command: -> {set_route}},
+        7 => {title: 'Добавлить вагон к поезду', command: -> {add_carriage}},
+        8 => {title: 'Отцепить вагон от поезда', command: -> {remove_carriage}},
+        9 => {title: 'Перемещать поезд по маршруту вперед', command: -> {go_ahead}},
+        10 => {title: 'Перемещать поезд по маршруту назад', command: -> {go_back}},
+        11 => {title: 'Просматривать список станций', command: -> {show_stations}},
+        12 => {title: 'Просматривать список поездов на станции', command: -> {show_trains_on_station}},
+    }
+  end
 
-loop do
-  print 'Ведите название станции: '
-  station_name = gets.chomp.to_s
+  def dispatch
+    loop do
+      clear
+      show_tasks
+      task = get_task
+      break if !@command_list[task]
+      puts @command_list[task][:command].call
+      continue
+    end
+    print "Вы вышли из программы"
+  end
 
-  station = Station.new(station_name)
+  private
+  attr_accessor :stations_list, :routes_list, :trains_list
 
-  stations_list.push({
-    name: station_name,
-    station: station,
-  })
-
-  print 'Создать еще одну станцию ? (Да/Нет): '
-  is_one_more = gets.chomp.to_s.downcase
-
-  break if is_one_more != 'да'
-end
-
-loop do
-  train_options = {}
-  print 'Ведите номер поезда: '
-  train_options[:number] = gets.chomp.to_s
-  print 'Ведите тип поезда: '
-  train_options[:type] = gets.chomp.to_sym
-  print 'Ведите кол-во вагонов поезда: '
-  count = gets.chomp.to_i
-
-  train_options[:carriages] = []
-  count.times do |i|
-    if train_options[:type] == :cargo
-      train_options[:carriages].push(cargo_carriage)
-    elsif train_options[:type] == :passenger
-      train_options[:carriages].push(passenger_carriage)
+  def clear
+    if Gem.win_platform?
+      system 'cls'
+    else
+      system 'clear'
     end
   end
 
-  train = train_options[:type] == :cargo ? CargoTrain.new(train_options) : PassengerTrain.new(train_options)
+  def show_tasks
+    puts 'Введите номер задачи : '
+    @command_list.each do |k, v|
+      puts "#{k} - #{v[:title]}"
+    end
+  end
 
-  trains_list.push({
-    number: train_options[:number],
-    train: train,
-  })
+  def get_task
+    gets.chomp.to_i
+  end
 
-  print 'Создать еще один поезд ? (Да/Нет): '
-  is_one_more = gets.chomp.to_s.downcase
+  def get_string
+    gets.chomp.to_s.downcase.strip
+  end
 
-  break if is_one_more != 'да'
-end
+  def create_station
+    print 'Ведите название станции: '
+    name = get_string
+    station = Station.new(name)
+    @stations_list.push({
+       name: name,
+       station: station,
+    })
+  end
 
-loop do
-  print 'Ведите начальную и конечную станцию через дефис: '
-  name = gets.chomp.to_s.delete(' ').downcase.split('-')
+  def create_train
+    train_options = {}
+    print 'Ведите номер поезда: '
+    train_options[:number] = get_string
+    print 'Ведите тип поезда: '
+    train_options[:type] = get_string.to_sym
+    print 'Ведите кол-во вагонов поезда: '
+    count = get_string.to_i
 
-  first_station = stations_list.find {|i| i[:name] == name[0]}
-  last_station = stations_list.find {|i| i[:name] == name[1]}
-
-  route = Route.new(first_station[:station], last_station[:station])
-
-  print 'Хотите добавить доп. станции? (Да/Нет): '
-  is_new_stations = gets.chomp.to_s.downcase
-
-  if is_new_stations == 'да'
-    print 'Введите список промежуточных станций через запятую: '
-    stations = gets.chomp.to_s.delete(' ').downcase.split(',')
-    stations.each do |i|
-      add_station = stations_list.find {|j| j[:name] == i}
-      if add_station
-        route.add_station add_station[:station]
+    train_options[:carriages] = []
+    count.times do |i|
+      if train_options[:type] == :cargo
+        train_options[:carriages].push(CargoCarriage.new)
+      elsif train_options[:type] == :passenger
+        train_options[:carriages].push(PassengerCarriage.new)
       end
     end
 
-    p route
+    train = train_options[:type] == :cargo ? CargoTrain.new(train_options) : PassengerTrain.new(train_options)
+
+    @trains_list.push({
+       number: train_options[:number],
+       train: train,
+     })
   end
 
-  routes_list.push({
-      name: name.join('-'),
-      route: route,
-  })
+  def create_route
+    @stations_list.each do |i|
+      puts "Станция : #{i[:name]}"
+    end
+    print 'Ведите начальную и конечную станцию через дефис: '
+    name = get_string.split('-')
 
-  print 'Создать еще один маршрут ? (Да/Нет): '
-  is_one_more = gets.chomp.to_s.downcase
+    first_station = @stations_list.find {|i| i[:name] == name[0]}
+    last_station = @stations_list.find {|i| i[:name] == name[1]}
 
-  break if is_one_more != 'да'
-end
+    route = Route.new(first_station[:station], last_station[:station])
 
-puts 'Выберите поезд: '
-
-trains_list.each do |i|
-  puts "поезда номер: #{i[:number]}"
-end
-
-selected_namber = gets.chomp.to_s
-selected_train_item = trains_list.find {|i| i[:number] == selected_namber}
-selected_train = selected_train_item[:train]
-
-puts 'Выберите маршрут для поезда: '
-
-routes_list.each do |i|
-  puts "маршрут : #{i[:name]}"
-end
-
-selected_route_name = gets.chomp.to_s.delete(' ').downcase
-
-selected_route_item = routes_list.find {|i| i[:name] == selected_route_name}
-selected_route = selected_route_item[:route]
-route_stations = selected_route.get_stations_list
-
-selected_train.route selected_route
-
-loop do
-  print 'Добавить вагон ? '
-  add_carriage = gets.chomp.to_s.downcase
-
-  if add_carriage == 'да'
-    carriage = selected_train.type == :cargo ? cargo_carriage : passenger_carriage
-    selected_train.attach_carriage(carriage)
+    @routes_list.push({
+       name: name.join('-'),
+       route: route,
+    })
   end
 
-  break if add_carriage != 'да'
-end
+  def select_route
+    puts 'Выберите маршрут для поезда: '
 
-loop do
-  print 'Удалить вагон ? '
-  remove_carriage = gets.chomp.to_s.downcase
+    @routes_list.each do |i|
+      puts "маршрут : #{i[:name]}"
+    end
 
-  if remove_carriage == 'да'
-    carriage = selected_train.type == :cargo ? cargo_carriage : passenger_carriage
-    selected_train.detach_carriage
+    name = get_string
+    route_item = @routes_list.find {|i| i[:name] == name}
+    route = route_item[:route]
   end
 
-  break if remove_carriage != 'да' || selected_train.carriages.length == 0
-end
+  def select_station
+    puts 'Выберите станцию: '
 
-loop do
-  print 'Едем дальше ? '
-  ahead = gets.chomp.to_s.downcase
-  current_station = ''
-  current_station_index = ''
+    @stations_list.each do |i|
+      puts "Станция : #{i[:name]}"
+    end
 
-  if ahead == 'да'
-    current_station = selected_train.go_ahead
-    current_station_index = selected_route.get_stations_list.index {|i| i.name == current_station.name}
+    name = get_string
+    station_item = @stations_list.find {|j| j[:name] == name}
+    station = station_item[:station]
   end
 
-  break if (ahead != 'да' || current_station_index == (selected_route.get_stations_list.length - 1))
-end
+  def select_train
+    puts 'Выберите поезд: '
 
-loop do
-  print 'Едем назад ? '
-  back = gets.chomp.to_s.downcase
-  current_station = ''
-  current_station_index = ''
+    @trains_list.each do |i|
+      puts "Поезд номер : #{i[:number]}"
+    end
 
-  if back == 'да'
-    current_station = selected_train.go_back
-    current_station_index = selected_route.get_stations_list.index {|i| i.name == current_station.name}
+    number = get_string
+    train_item = @trains_list.find {|j| j[:number] == number}
+    train = train_item[:train]
   end
 
-  break if back != 'да' || current_station_index == 0
+  def add_station_to_route
+    route = select_route
+    station = select_station
+
+    route.add_station station
+  end
+
+  def remove_station_from_route
+    route = select_route
+    station = select_station
+
+    route.remove_station station
+  end
+
+  def set_route
+    train = select_train
+    route = select_route
+
+    train.route route
+  end
+
+  def add_carriage
+    train = select_train
+
+    carriage = train.type == :cargo ? CargoCarriage.new : PassengerCarriage.new
+    train.attach_carriage(carriage)
+  end
+
+  def remove_carriage
+    train = select_train
+
+    if train.carriages.length == 0
+      puts "Вагон больше нет"
+      return
+    end
+
+    train.detach_carriage
+  end
+
+  def go_ahead
+    train = select_train
+    train.go_ahead
+  end
+
+  def go_back
+    train = select_train
+    train.go_back
+  end
+
+  def show_stations
+    puts @stations_list
+  end
+
+  def show_trains_on_station
+    station = select_station
+
+    puts station.trains
+    puts station.trains_registr
+  end
+
+  def continue
+    puts "нажмите любуюклавишу чтобы продолжить"
+    gets
+  end
 end
 
-print 'Показать список станций ? '
-show_station_list = gets.chomp.to_s.downcase
-
-if show_station_list == 'да'
-  puts stations_list
-end
-
-print 'Показать список поездов на станции ? '
-train_on_station = gets.chomp.to_s.downcase
-
-if train_on_station == 'да'
-  print 'Введите название станции для просмотра поездов ? '
-  station_title = gets.chomp.to_s.downcase
-  station_selected = stations_list.find {|i| i[:name] == station_title}
-
-  puts station_selected[:station].trains
-  puts station_selected[:station].trains_registr
-end
+main = Main.new
+main.dispatch

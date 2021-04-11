@@ -70,7 +70,7 @@ class Train
   def next_station
     index = @route.stations.index @station
     length = @route.stations.length
-    if index == length
+    if index == length - 1
       puts 'вы на последней станции'
     else
       @route.stations[index + 1]
