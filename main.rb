@@ -161,28 +161,45 @@ class Main
     route = select_route
     station = select_station
 
-    route.add_station station
+    stations = route.add_station station
+
+    if stations
+      stations
+    else
+      puts 'Ошибка, такая станция уже есть'
+    end
   end
 
   def remove_station_from_route
     route = select_route
     station = select_station
 
-    route.remove_station station
+    stations = route.remove_station station
+    if stations
+      stations
+    else
+      puts 'Ошибка, такой станции нет'
+    end
   end
 
   def set_route
     train = select_train
     route = select_route
 
-    train.route route
+    station = train.route route
+    puts "Вы на станции: #{station}"
   end
 
   def add_carriage
     train = select_train
 
     carriage = train.type == :cargo ? CargoCarriage.new : PassengerCarriage.new
-    train.attach_carriage(carriage)
+    carriages = train.attach_carriage(carriage)
+    if carriages
+      puts carriages
+    else
+      puts 'Поезд движется'
+    end
   end
 
   def remove_carriage
@@ -193,17 +210,32 @@ class Main
       return
     end
 
-    train.detach_carriage
+    carriages = train.detach_carriage
+    if carriages
+      puts carriages
+    else
+      puts 'Поезд движется'
+    end
   end
 
   def go_ahead
     train = select_train
-    train.go_ahead
+    station = train.go_ahead
+    if station
+      puts station
+    else
+      puts 'вы на последней станции'
+    end
   end
 
   def go_back
     train = select_train
-    train.go_back
+    station = train.go_back
+    if station
+      puts station
+    else
+      puts 'Вы на первой станции'
+    end
   end
 
   def show_stations

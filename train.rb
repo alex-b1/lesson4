@@ -17,48 +17,35 @@ class Train
   end
 
   def attach_carriage(carriage)
-    if !validate_speed?
+    if !validate_speed? && validate_carriage?(carriage)
       @carriages << carriage
-      puts @carriages
-      @carriages
-    else
-      puts 'Поезд движется'
-      @carriages
     end
   end
 
   def detach_carriage
     if !validate_speed?
       @carriages.pop
-      puts @carriages
-      @carriages
-    else
-      puts 'Поезд движется'
-      @carriages
     end
   end
 
   def route(route)
     @route = route
     @station = @route.stations.first
-    @route.stations.each do |i|
-       i.registrate self
-    end
-    puts "Вы на станции: #{@station}"
-    @route.get_stations_list
   end
 
   def go_ahead
     @station = next_station if next_station
-    @station
   end
 
   def go_back
     @station = previous_station if previous_station
-    @station
   end
 
   private
+
+  def validate_carriage?(carriage)
+    carriage.class::TYPE == @type
+  end
 
 # validate_speed? используется только в классе Train для проверки скорости
   def validate_speed?
@@ -71,7 +58,7 @@ class Train
     index = @route.stations.index @station
     length = @route.stations.length
     if index == length - 1
-      puts 'вы на последней станции'
+      false
     else
       @route.stations[index + 1]
     end
@@ -80,7 +67,7 @@ class Train
   def previous_station
     index = @route.stations.index @station
     if index == 0
-      puts 'Вы на первой станции'
+      false
     else
       @route.stations[index - 1]
     end

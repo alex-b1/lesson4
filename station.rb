@@ -4,15 +4,10 @@ class Station
   def initialize(name)
     @name = name
     @trains = []
-    @trains_registr = []
   end
 
   def arrival_train(train)
     @trains << train
-
-    while train.slow_down > 0
-        train.slow_down
-    end
   end
 
   def depart_train(train)
@@ -22,10 +17,6 @@ class Station
     while train.accelerate < 80
       train.accelerate
     end
-  end
-
-  def registrate(train)
-    @trains_registr << train
   end
 
   def get_trains_by_type

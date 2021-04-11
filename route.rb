@@ -8,19 +8,11 @@ class Route
   end
 
   def add_station(station)
-    if validate_station? station
-      puts 'Ошибка, такая станция уже есть'
-    else
-      @stations.insert(-2, station)
-    end
+    @stations.insert(-2, station) unless validate_station? station
   end
 
   def remove_station(station)
-    if validate_station? station
-      @stations.delete(station)
-    else
-      puts 'Ошибка, такой станции нет'
-    end
+    @stations.delete(station) unless validate_station? station
   end
 
   def get_stations_list
